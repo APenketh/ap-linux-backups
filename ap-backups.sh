@@ -23,9 +23,6 @@
     exec 1>>/var/log/ap-backups/ap-backups.log 2>&1
     # Redirect stdout to file log.out then redirect stderr to stdout. Note that the order is important when you want them going to the same file. stdout must be redirected before stderr is redirected to stdout   
 
-    # Include The Config File That Was Created In The Installation
-    source /etc/ap-scripts/ap-backups-main.conf
-
     timestamp=$(date +"%F")
     backup_dir="/backups/$timestamp"
     backup_dir_db="$backup_dir/databases"
