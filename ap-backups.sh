@@ -82,10 +82,9 @@
     echo "$(datetime) Checking For Enough Avalible Disk Space To Perform The Backup. This Does Not Take Into Account Any New Backup Items Added Since Last Succesful Backup."
 
 	total_space=$(df -m $backup_dir | awk '{print $4}' | grep -v "Available")
-		prev_bkup_total=$(du -mxc /backups/$timestamp1 | grep "total" | awk '{print $1}')
-		prev_bkup_total_comp=$(du -mxc /backups/$timestamp1.tar.gz | grep "total" | awk '{print $1}')
 
 	if [ -d "/backups/$timestamp1" ]; then
+		prev_bkup_total=$(du -mxc /backups/$timestamp1 | grep "total" | awk '{print $1}')
 	    	echo "$(datetime) Previous Backup Total Is $prev_bkup_total M & Total Avalible Space Is $total_space M"
 			if [ "$prev_bkup_total" -le "$total_space" ]; then
 		    		echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
@@ -94,6 +93,7 @@
 		    		exit 0
 			fi
 	elif [ -f "/backups/$timestamp1.tar.gz" ]; then
+		prev_bkup_total_comp=$(du -mxc /backups/$timestamp1.tar.gz | grep "total" | awk '{print $1}')
                 echo "$(datetime) Previous Backup Total Is $prev_bkup_total_comp M & Total Avalible Space Is $total_space M"
                         if [ "$prev_bkup_total_comp" -le "$total_space" ]; then
                                 echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
@@ -102,13 +102,11 @@
                                 exit 0
                         fi
 	else
-		echo "$(datetime) There Is No Previous Backup To Estimate The Backup Size, Proceeding..."
+		echo "$(datetime) There Is No Previous Backups To Estimate The Backup Size, Proceeding..."
 	fi
 
     echo "$(datetime) Starting The File Level Backup Process"
-	webservice=$(grep "webservice" $backupconfig | awk -F\' '{print $2}') 
-	extradirbackup=$(grep "backup_directory" $backupconfig | awk -F\' '{print $2}')
-
+    echo "$(datetime) Proceeding With Backing Up $webservice"
 	# Switch between different supported web services
 	if [ "$webservice" = "nginx" ]; then
 	    nginxbackup;
@@ -119,6 +117,10 @@
 	else
 	    echo "($datetime) Proceeding Without Backing Up Any Webservices";
 	fi
+
+    echo "$(datetime) Proceeding With Backing Up Configuration Defined Directory's"
+	backup_dir_new=$(echo $backup_directory | tr ',' '\n')
+	echo "$backup_dir_new"
 
     echo "$(datetime) Starting The Database Backup Process"
 
@@ -131,8 +133,9 @@
 		exit 0
 	fi
 	
-	#We need a better way of grabbing the applicable databases rather than all the things
 	databases=`mysql -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema|performance_schema)"`
+	echo "$(datetime) Proeeding With Backing Up The Following Databases -"
+	echo "$databases"
 
 	for db in $databases; do
 		echo "$(datetime) Starting Dump For Database '$db'"
@@ -140,11 +143,7 @@
 		echo "$(datetime) Completed Dump For Database '$db', this can be found at $backup_dir_db/$db-$timestamp.gz"
 	done
 
-	# Start of deletion of older backups that are no longer needed
-	# Going to set up an rsync to archive the old backups on a local server
-	# 2+ day backup is going to be deleted
-	# 1 day backup is going to be compressed into a tar
-	# 0 day backup which has just been created is going to be left
+	# This needs updating to read off the config file
 
     echo "$(datetime) Starting Clean Up Process For Old Backups"
 
@@ -182,3 +181,4 @@
     find $backup_dir -type f -print0 | xargs -0r ls -lah | awk '{print $5,$9}'
 
     echo "$(datetime) *****************************************************************"
+    echo ""
