@@ -8,10 +8,8 @@
 # To do;
 #
 # Config file additons to add in -
-# Add funcinailty to back up other things other than vhosts
 # Change the archive of backups (How long they are kept etc)
 # Add blacklist for MySQL Dumps
-# Add Support For Apache & Ability to switch between Nginx/Apache dependant on Config File and turn these into functions to be called
 #
 
     # Exit the scipt is a command returns anything other than exit status 0 on error
@@ -38,35 +36,6 @@
 	datetime() {
 	    date +"%b %d %T"
 		   }
-
-	    nginxbackup()	{
-			# Vhost Backup's - Nginx
-        		# We are getting the "backup roots" from the sites-enabled config files and then removing the excess we don't need.
-        		vhosts=`grep -ri "backup_root" /etc/nginx/sites-enabled/* | tr -d ';' | awk '{print $NF}'`
-
-        		for vhost in $vhosts; do
-            		    if [ -d $vhost ]; then
-                    		    vhostname=`echo "$vhost" | awk -F/ '{print $NF}'`
-                		if [ ! -f $backup_dir/$vhostname-$timestamp.tar.gz ]; then
-                    		    echo "$(datetime) Starting File Level Backup For $vhostname"
-                    		    tar -C $vhost -zcf $backup_dir/$vhostname-$timestamp.tar.gz .
-                    		    echo "$(datetime) Site $vhostname has been succesfully backed up & Is Avalible Under $backup_dir/$vhostname-$timestamp.tar.gz"
-                		else
-                    		    echo "$(datetime) Error - $backup_dir/$vhostname-$timestamp.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
-                		fi
-            		    else
-                		echo "$(datetime) Error - Directory $vhost does not exist"
-            		    fi
-        		done
-				}
-
-	    apachebackup()	{
-			echo "apachebackup - WIP"
-				}
-
-	    httpdbackup()	{
-			echo "httpdbackup - WIP"
-				}
 
     echo "$(datetime) *****************************************************************"
     echo "$(datetime) ********************Starting Backup Procedure********************"
@@ -108,22 +77,26 @@
 		echo "$(datetime) There Is No Previous Backups To Estimate The Backup Size, Proceeding..."
 	fi
 
+	# Starting the file level backup process, this grabs all the paths from the config file
     echo "$(datetime) Starting The File Level Backup Process"
-    echo "$(datetime) Proceeding With Backing Up $webservice"
-	# Switch between different supported web services
-	if [ "$webservice" = "nginx" ]; then
-	    nginxbackup;
-	elif [ "$webservice" = "apache2" ]; then
-	    apachebackup;
-	elif [ "$webservice" = "httpd" ]; then
-	    httpdbackup;
-	else
-	    echo "($datetime) Proceeding Without Backing Up Any Webservices";
-	fi
-
     echo "$(datetime) Proceeding With Backing Up Configuration Defined Directory's"
 	backup_dir_new=$(echo $backup_directory | tr ',' '\n')
 	echo "$backup_dir_new"
+
+                        for backup_dir_n in $backup_dir_new; do
+                            if [ -d $backup_dir_n ]; then
+                                    vhostname=`echo "${backup_dir_n%/}" | awk -F/ '{print $NF}'`
+                                if [ ! -f $backup_dir/$vhostname-$timestamp.tar.gz ]; then
+                                    echo "$(datetime) Starting File Level Backup For $vhostname"
+                                    tar -C $backup_dir_n -zcf $backup_dir/$vhostname-$timestamp.tar.gz .
+                                    echo "$(datetime) Site $vhostname has been succesfully backed up & Is Avalible Under $backup_dir/$vhostname-$timestamp.tar.gz"
+                                else
+                                    echo "$(datetime) Error - $backup_dir/$vhostname-$timestamp.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
+                                fi
+                            else
+                                echo "$(datetime) Error - Directory $vhost does not exist"
+                            fi
+                        done
 
     echo "$(datetime) Starting The Database Backup Process"
 

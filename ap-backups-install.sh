@@ -2,10 +2,11 @@
 # File Location - /ap-scripts/ap-installbackup.sh
 #
 # To do;
-
+#
 # FIX THIS - If you select to keep your old configuration file and it fails the verification test, it will run through the setup of a new one but then when finished will look around and do everything again minus the backup/compression times?? Werid issue.
 #
 # Add Ability To Change Cron Job Times
+# Make sure the cron job does not duplicate itself
 # 
 #
 
@@ -21,7 +22,10 @@
 	webservice=""
 	supportedwebservice="nginx, apache2, httpd"
 	backup_dir_hold=""
+	vhost_backup_dir_hold=""
 	excludedb_hold=""
+	databaseservice=""
+	supporteddatabase="mysql"
 
 	# We are defining the date/time for our logging in a function so that it is updated as the event occours instead of a variable where it would only keep the time where it was first stored
         datetime() {
@@ -109,6 +113,50 @@
             	done	
 				}
 
+	detectingdatabaseservice() 	{
+                while true; do
+                        read -p "We Have Detected You Are Running The Following Database Service On This Server '$databaseservice' Is This Correct? Please Select [y/N]" yn
+                        case $yn in
+                                [Yy]* )
+                                        echo "database_service=\"$databaseservice\"" >> $backupconfig;
+                                        break;;
+                                [Nn]* )
+                                        echo "Please Enter The Database Service That You Will Be Using, The Supported Database Service's are: $supporteddatabase. If You Do Not Plan On Using A Database Please Enter "non""
+                                        while true ; do
+                                                read -e newdatab
+                                                if [ "$newdatab" != "mysql" -a "$newdatab" != "non" ]; then
+                                                        while true; do
+                                                        read -p "You Have Entered The Database Service $newdatab. Is This Correct? Please Select [y/N]" yn
+                                                                case $yn in
+                                                                        [Yy]* )
+                                                                                if [ "$newdatab" = "mysql" -a "$newdatab" = "non" ]; then
+                                                                                        echo "database_service=\"$newdatab\"" >> $backupconfig;
+                                                                                        break;
+                                                                                else
+                                                                                        echo "Unfortunately The Value You Entered Is Not Supported. Please Enter A Valid Database - Such As $supporteddatabase" or 'non';
+                                                                                        break;
+                                                                                fi
+                                                                                        break;;
+                                                                        [Nn]* )
+                                                                                echo "Please Enter Your Corrected Database Service.";
+                                                                                break;;
+                                                                        * )
+                                                                                echo "Please Select [y/N]";;
+                                                                esac
+                                                        done
+                                                else
+                                                        echo "We Have Finished Reviewing The Database Service. Proceeding To The Next Step.."
+                                                        echo "database_service=\"$newdatab\"" >> $backupconfig
+                                                        break;
+                                                fi
+                                        done
+                                        break;;
+                                * )
+                                        echo "Please Select [y/N]";;
+                        esac
+                done
+					}
+
 
 	# Fuction for installing a new config file, this also includes the removal of old config files if theoption was chosen to do so
         newconfig()     {
@@ -120,7 +168,9 @@
 
 	    	echo "Creating AP-Backup Configuration File under $backupconfig"
             	touch $backupconfig
+	    	echo "*****************************************************************" >> $backupconfig
 	    	echo "# AP-Backups Configuration File" >> $backupconfig
+	    	echo "*****************************************************************" >> $backupconfig
 	    	echo "" >> $backupconfig
 
 	    	# Asking the user if they are running a webserivce, if so detecting what web server they currently have running and then confirming if thats the one they want to be included
@@ -131,26 +181,27 @@
 	    		case $yn in
 				[Yy]* )
         	    			echo "Checking For Currently Avalible Web Hosts..";
-            	    			if netstat -plnt | grep 80 | grep -i "nginx"; then
-                				webservice="nginx";
-                				detectingwebservice;
-						break;
-            	    			elif netstat -plnt | grep 80 | grep -i "apache2"; then
-                				webservice="apache2";
-                				detectingwebservice;
-						break;
-            	    			elif netstat -plnt | grep 80 | grep -i "httpd"; then
-                				webservice="httpd";
-                				detectingwebservice;
-						break;
-            	    			else
-                				webservice="non";
-                				detectingwebservice;
-						break;
-            	    			fi
-		    				break;;
+				                if netstat -plnt | grep 80 | grep -i "nginx" > /dev/null; then
+				                        webservice="nginx";
+                					detectingwebservice;
+							break;
+                				elif netstat -plnt | grep 80 | grep -i "apache2" > /dev/null; then
+                        				webservice="apache2";
+                					detectingwebservice;
+							break;
+                				elif netstat -plnt | grep 80 | grep -i "httpd" > /dev/null; then
+                        				webservice="httpd";
+                					detectingwebservice;
+							break;
+                				else
+                        				webservice="non";
+							break;
+                				fi
+		    					break;;
 				[Nn]* )
+					echo "";
 		    			echo "Proceeding With No Webservice";
+					webservice="non";
 		    			echo "webservice=\"non\"" >> $backupconfig;
 		    			break;;
 				* )
@@ -162,93 +213,166 @@
 	    	echo "" >> $backupconfig
 	   	echo "# Directory's To Include In The Backups (These Must Be Comma Seperated);" >> $backupconfig
 	    	echo ""
-            	
-		while true; do
-                	read -p "Do You Wish To Enter Any Custom Directory's To Be Backups That Are Not Included In Your Vhosts? Please Select [y/N]" yn
-                    	case $yn in
-                    		[Yy]* ) 
-			    		echo "Please Enter The Full Paths To The Extra Directory's You Wish To Backup. Once Complete Please Enter 'Finish'"
-			    		while true ; do
-			    		read -e extradir
-			    			if [ "$extradir" != "finish" -a "$extradir" != "Finish" ]; then
-				    			while true; do
-                					read -p "You Have Entered The Directory $extradir. Is This Correct? Please Select [y/N]" yn
-                    			    		case $yn in
-                    			    			[Yy]* ) local extlength=${#extradir}
-						    			local extlastchar=${extradir:extlength-1:1}
-						   		 	# Variable needs a / at the end. If it does we add the path in as is, if not we will add the / on for the user and then submit. This is to stop the script breaking.
-						    			if [ $extlastchar != "/" ]; then
-										backup_dir_hold="$backup_dir_hold$extradir/,"
-						    			else
-										backup_dir_hold="$backup_dir_hold$extradir,"
-						    			fi
-                    				    			echo "Please Enter Another Directory Or Type 'Finish' To Proceed."
-						    			break;;
-                    			    			[Nn]* ) echo "Please Enter Your Corrected Directory Or Type 'Finish' To Proceed." 
-						    			break;;
-                    			    			* ) echo "Please Select [y/N]";;
-                					esac
-            			    			done
-			    			else
-				    			echo "You Have Finished Entering Directory's To Backup. Proceeding To The Next Step.."
-				    			break;
-			    			fi
-			    		done
-			    		break;;
-                    		[Nn]* ) 
-			    		echo "You Do Not Have Any Extra Directory's To Add Into The Backup. Proceeding.."; 
-			    		break;;
-                    		* ) 
-			    		echo "Please Select [y/N]";;
-                	esac
-		done
 
-		# Below variable change is to remove the last comma that is inserted by the above statement which helps clean up the config file. It then inserts the paths into the config file under the variable "backup_directory"
-	    	backup_dir_hold="${backup_dir_hold%?}"
-	    	echo "backup_directory=\"$backup_dir_hold\"" >> $backupconfig
-	    	echo "" >> $backupconfig
+		#Wrapping this up so if the user has not selected any web services they can skip this part
+		if [ "$webservice" == "non" ]; then
+			echo "Skipping Setting Up Vhost Backup Directory's As You Have Selected No Web Service"
+			echo ""
+		else
+			echo "Currently Scanning $webservice For Potential Backup Locations"
 
+			# Nginx Config;
+			nginxvhosts=`grep -ri "set $root_path" /etc/nginx/sites-enabled/* | tr -d ';' | tr -d "'" | awk '{print $NF}'`
 
-        	# Giving The User A Choice To Enter Any MySQL Databases They Wish To Exclude From The Backups
-		echo "By Default All Databases Are Included In The Backup, If You Have Specific Databases You Do Not Wish To Backup You Can Do This Below"
-		echo "# Databases That Are Not To Be Included In The Backups (These Must Be Comma Seperated);" >> $backupconfig
+			for nginxvhost in $nginxvhosts; do
+               			read -p "We Have Detected The Following Vhost $nginxvhost. Do You Wish For This Vhost To Be Backed Up? Please Select [y/N]" yn
+				case $yn in
+                        		[Yy]* ) local vhlength=${#extradir}
+                                        	local vhlastchar=${extradir:extlength-1:1}
+                                        	# Variable needs a / at the end. If it does we add the path in as is, if not we will add the / on for the user and then submit. This is to stop the script breaking.
+                                        	if [ "$vhlastchar" != "/" ]; then
+                                			vhost_backup_dir_hold="$vhost_backup_dir_hold$nginxvhost/,"
+                        			else
+                                			vhost_backup_dir_hold="$vhost_backup_dir_hold$nginxvhost,"
+                        			fi
+						;;
+                               		[Nn]* ) echo "Proceeding.."
+						;;
+                                	* ) 	echo "Please Select [y/N]";;
+                      		esac    
+			done
 
-            	while true; do
-                read -p "Do You Wish To Enter Any Databases To Exclude From The Backups? Please Select [y/N]" yn
-               		case $yn in
-                    		[Yy]* )
-                            		echo "Please Enter The Name Of The Databases You Do Not Wish To Backup. Once Complete Please Enter 'Finish'"
-                            		while true ; do
-                                	read -e excludedb
-                                	if [ "$excludedb" != "finish" -a "$excludedb" != "Finish" ]; then
-                                    		while true; do
-                                        	read -p "You Have Entered The Database $excludedb. Is This Correct? Please Select [y/N]" yn
-                                            		case $yn in
-                                            			[Yy]* ) excludedb_hold="$excludedb_hold$excludedb,"
-                                                    			echo "Please Enter Another Database Or Type 'Finish' To Proceed."
-                                                    			break;;
-                                            			[Nn]* ) echo "Please Enter Your Corrected Database Or Type 'Finish' To Proceed."
-                                                    			break;;
-                                            			* ) echo "Please Select [y/N]";;
-                                        		esac
-                                    		done
-                                	else
-                                    		echo "You Have Finished Entering Backups To Exclude. Proceeding To The Next Step.."
-                                    		break;
-                                	fi
-                            		done
-                            			break;;
-                    		[Nn]* )
-                            		echo "You Do Not Have Any To Exclude From The Backup. Proceeding..";
-                            		break;;
-                    		* )
-                            		echo "Please Select [y/N]";;
+                	# Below variable change is to remove the last comma that is inserted by the above statement which helps clean up the config file. It then inserts the paths into the config file.
+                	vhost_backup_dir_hold="${vhost_backup_dir_hold%?}"
+                	echo "vhost_backup_directory=\"$vhost_backup_dir_hold\"" >> $backupconfig
+                	echo "" >> $backupconfig		
+                	echo ""		
+		fi
+
+			while true; do
+                		read -p "Do You Wish To Enter Any Custom Directory's To Be Included In The Backup? Please Select [y/N]" yn
+                    		case $yn in
+                    			[Yy]* ) 
+			    			echo "Please Enter The Full Paths To The Extra Directory's You Wish To Backup (You May Use Tab To Assist). Once Complete Please Enter 'Finish'"
+			    			while true ; do
+			    			read -e extradir
+			    				if [ "$extradir" != "finish" -a "$extradir" != "Finish" ]; then
+				    				while true; do
+                						read -p "You Have Entered The Directory $extradir. Is This Correct? Please Select [y/N]" yn
+                    			    			case $yn in
+                    			    				[Yy]* ) local extlength=${#extradir}
+						    				local extlastchar=${extradir:extlength-1:1}
+						   		 		# Variable needs a / at the end. If it does we add the path in as is, if not we will add the / on for the user and then submit. This is to stop the script breaking.
+						    				if [ $extlastchar != "/" ]; then
+											backup_dir_hold="$backup_dir_hold$extradir/,"
+						    				else
+											backup_dir_hold="$backup_dir_hold$extradir,"
+						    				fi
+                    				    				echo "Please Enter Another Directory Or Type 'Finish' To Proceed."
+						    				break;;
+                    			    				[Nn]* ) echo "Please Enter Your Corrected Directory Or Type 'Finish' To Proceed." 
+						    				break;;
+                    			    				* ) echo "Please Select [y/N]";;
+                						esac
+            			    				done
+			    				else
+				    				echo "You Have Finished Entering Directory's To Backup. Proceeding To The Next Step.."
+				    				break;
+			    				fi
+			    			done
+			    			break;;
+                    			[Nn]* ) 
+			    			echo "You Do Not Have Any Extra Directory's To Add Into The Backup. Proceeding.."; 
+			    			break;;
+                    			* ) 
+			    			echo "Please Select [y/N]";;
                 		esac
-            	done
+			done
+
+			# Below variable change is to remove the last comma that is inserted by the above statement which helps clean up the config file. It then inserts the paths into the config file.
+	    		backup_dir_hold="${backup_dir_hold%?}"
+	    		echo "backup_directory=\"$backup_dir_hold\"" >> $backupconfig
+	    		echo "" >> $backupconfig
+
+                echo "# Database Service Configuration" >> $backupconfig
+
+                while true; do
+                        read -p "Are You Running A Database Service? Please Select [y/N]" yn
+                        case $yn in
+                                [Yy]* )
+                                        echo "Checking For Currently Avalible Database Software..";
+                                        if netstat -plnt | grep "mysql" > /dev/null; then
+                                                databaseservice="mysql";
+                                                detectingdatabaseservice;
+                                                break;
+                                        elif netstat -plnt | grep "mysqld" > /dev/null; then
+                                                databaseservice="mysql";
+                                                detectingdatabaseservice;
+                                                break;
+                                        else
+                                                webservice="non";
+                                                detectingdatabaseservice;
+                                                break;
+                                        fi
+                                                break;;
+                                [Nn]* )
+                                        echo "Proceeding With No Database Service";
+					echo ""
+					databaseservice="non";
+                                        echo "database=\"non\"" >> $backupconfig;
+                                        break;;
+                                * )
+                                        echo "Please Select [y/N]";;
+                        esac
+                done
+
+                echo "" >> $backupconfig
+
+		if [ "$databaseservice" == "non" ]; then
+			echo "Skipping Setting Up Excluded Databases To Include In The Backup Due To No Database Service Being Selected"
+			echo ""
+		else
+        		# Giving The User A Choice To Enter Any Databases They Wish To Exclude From The Backups
+			echo "By Default All Databases Are Included In The Backup, If You Have Specific Databases You Do Not Wish To Backup You Can Do This Below"
+			echo "# Databases That Are Not To Be Included In The Backups (These Must Be Comma Seperated);" >> $backupconfig
+
+            		while true; do
+                	read -p "Do You Wish To Enter Any Databases To Exclude From The Backups? Please Select [y/N]" yn
+               			case $yn in
+                    			[Yy]* )
+                            			echo "Please Enter The Name Of The Databases You Do Not Wish To Backup. Once Complete Please Enter 'Finish'"
+                            			while true ; do
+                                		read -e excludedb
+                                			if [ "$excludedb" != "finish" -a "$excludedb" != "Finish" ]; then
+                                    				while true; do
+                                        			read -p "You Have Entered The Database $excludedb. Is This Correct? Please Select [y/N]" yn
+                                            				case $yn in
+                                            					[Yy]* ) excludedb_hold="$excludedb_hold$excludedb,"
+                                                    					echo "Please Enter Another Database Or Type 'Finish' To Proceed."
+                                                    					break;;
+                                            					[Nn]* ) echo "Please Enter Your Corrected Database Or Type 'Finish' To Proceed."
+                                                    					break;;
+                                            					* ) echo "Please Select [y/N]";;
+                                        				esac
+                                    				done
+                                			else
+                                    			echo "You Have Finished Entering Backups To Exclude. Proceeding To The Next Step.."
+                                    			break;
+                                			fi
+                            			done
+                            			break;;
+                    			[Nn]* )
+                            			echo "You Do Not Have Any To Exclude From The Backup. Proceeding..";
+                            			break;;
+                    			* )
+                            			echo "Please Select [y/N]";;
+                			esac
+            		done
+		fi
 
 		# Adding the MySQL Databases Entered into the config file
 		excludedb_hold="${excludedb_hold%?}"
-		echo "exclude_database=\"$excludedb_hold\"" >> $backupconfig;
+		echo "exclude_databases=\"$excludedb_hold\"" >> $backupconfig;
 
 	    	# Now we need to get the user to set up their archive preferences this is going to be done by how many days and then what they want to happen with the backup on those days.
 	    	echo "" >> $backupconfig
