@@ -7,6 +7,7 @@
 #
 # To do;
 #
+# Implent timeout for backup tar
 # Config file additons to add in -
 # Change the archive of backups (How long they are kept etc)
 # Add blacklist for MySQL Dumps
