@@ -1,17 +1,4 @@
 #! /bin/bash
-# File Location - /ap-scripts/ap-installbackup.sh
-#
-# To do;
-#
-# Add The Download Of The Script
-# Add Ability To Change Cron Job Times
-# Make sure the cron job does not duplicate itself
-# Once everything has been compelted then mofiy the configuration check to include all of the applicable varibles
-#
-# Add some verification for the Cronjob time
-#
-# Error Checking On The Rsync Part is currenlyy exiting the script when throwing an error
-#
 
 	# Exit the scipt is a command returns anything other than exit status 0 on error
 	set -e
@@ -173,8 +160,7 @@
 
                 # Start of the setup of the rsync parameter's
                 echo "" >> $backupconfig
-                echo "# Rsync Parameters" >> $backupconfig
-                echo "" >> $backupconfig
+                echo "# Rsync Settings" >> $backupconfig
 
                 while true; do
                         read -p "Do You Wish To Setup Rsync To Archive The Backups In Another Server? Please Select [y/N]" yn
@@ -289,7 +275,7 @@
                                                 case $yn in
                                                         [Yy]* ) rsyncusername="$newrsyncusername";
                                                                 echo "Using \"$newrsyncusername\" As The Remote Username.";
-                                                                echo "rsynctarget=\"$rsyncusername\"" >> $backupconfig;
+                                                                echo "rsynctargetname=\"$rsyncusername\"" >> $backupconfig;
                                                                 break;;
                                                         [Nn]* ) echo "Please Enter Your Corrected Username.";
                                                                 break;;
@@ -348,13 +334,13 @@
 
 	    	echo "Creating AP-Backup Configuration File under $backupconfig"
             	touch $backupconfig
-	    	echo "*****************************************************************" >> $backupconfig
-	    	echo "# AP-Backups Configuration File" >> $backupconfig
-	    	echo "*****************************************************************" >> $backupconfig
+	    	echo "# *****************************************************************" >> $backupconfig
+	    	echo "#                 AP-Backups Configuration File" >> $backupconfig
+	    	echo "# *****************************************************************" >> $backupconfig
 	    	echo "" >> $backupconfig
 
 	    	# Asking the user if they are running a webserivce, if so detecting what web server they currently have running and then confirming if thats the one they want to be included
-    		echo "# Web Service Configuration" >> $backupconfig
+    		echo "# Web Service Settings" >> $backupconfig
 
     		while true; do
 			read -p "Are You Running A Webservice? Please Select [y/N]" yn
@@ -476,7 +462,7 @@
 	    		echo "backup_directory=\"$backup_dir_hold\"" >> $backupconfig
 	    		echo "" >> $backupconfig
 
-                echo "# Database Service Configuration" >> $backupconfig
+                echo "# Database Service Settings" >> $backupconfig
 
                 while true; do
                         read -p "Are You Running A Database Service? Please Select [y/N]" yn
@@ -673,23 +659,30 @@
 			break;
 		fi
 
+		echo "" >> $backupconfig
+		echo "# Cron Job Settings" >> $backupconfig
+
                 # Define what time the user wants to run the backup job
                 echo "Please Enter The Time That You Want To Backup Job To Run In The Following Format [XX:XX]"
 	        while true; do
                       	if [[ $jobtime != $newjobtime ]]; then
                         read -e newjobtime
-                        	while true; do
-                                read -p "You Have Entered The Time \"$newjobtime\". Is This Correct? Please Select [y/N]" yn
-                                	case $yn in
-                                        	[Yy]* ) jobtime="$newjobtime";
-                                                        echo "Using \"$newjobtime\" As The Remote Username.";
-                                                        echo "cronjob_time=\"$jobtime\"" >> $backupconfig;
-                                                        break;;
-                                               	[Nn]* ) echo "Please Enter Your Corrected Time.";
-                                                        break;;
-                                                * ) echo "Please Select [y/N]";;
-                                        esac
-                                done
+				if [[ "$newjobtime" =~ ^[0-2][0-9]:[0-9][0-9]$ ]]; then
+                        		while true; do
+                                	read -p "You Have Entered The Time \"$newjobtime\". Is This Correct? Please Select [y/N]" yn
+                                		case $yn in
+                                        		[Yy]* ) jobtime="$newjobtime";
+                                                        	echo "Using \"$newjobtime\" As The Remote Username.";
+                                                        	echo "cronjob_time=\"$jobtime\"" >> $backupconfig;
+                                                        	break;;
+                                               		[Nn]* ) echo "Please Enter Your Corrected Time.";
+                                                        	break;;
+                                                	* ) echo "Please Select [y/N]";;
+                                        	esac
+                                	done
+				else
+					echo "Please Enter A Time In The Following Format XX:XX"
+				fi
                         else
                                 break;
                         fi

@@ -1,17 +1,4 @@
 #! /bin/bash
-# File Location - /ap-scripts/ap-backups.sh
-#
-# Increase Security For Sourcing The Config File - Remove the ability to execute commands
-# Change the way backups are compressed and removed using find with -mtime
-# Add in remote backups via rsync?
-#
-# To do;
-#
-# Implent timeout for backup tar
-# Config file additons to add in -
-# Change the archive of backups (How long they are kept etc)
-# Add blacklist for MySQL Dumps
-#
 
     # Exit the scipt is a command returns anything other than exit status 0 on error
     set -e
@@ -79,80 +66,114 @@
 	fi
 
 	# Starting the file level backup process, this grabs all the paths from the config file
-    echo "$(datetime) Starting The File Level Backup Process"
-    echo "$(datetime) Proceeding With Backing Up Configuration Defined Directory's"
-	backup_dir_new=$(echo $backup_directory | tr ',' '\n')
-	echo "$backup_dir_new"
+    	echo "$(datetime) Starting The File Level Backup Process"
 
-                        for backup_dir_n in $backup_dir_new; do
-                            if [ -d $backup_dir_n ]; then
-                                    vhostname=`echo "${backup_dir_n%/}" | awk -F/ '{print $NF}'`
-                                if [ ! -f $backup_dir/$vhostname-$timestamp.tar.gz ]; then
-                                    echo "$(datetime) Starting File Level Backup For $vhostname"
-                                    tar -C $backup_dir_n -zcf $backup_dir/$vhostname-$timestamp.tar.gz .
-                                    echo "$(datetime) Site $vhostname has been succesfully backed up & Is Avalible Under $backup_dir/$vhostname-$timestamp.tar.gz"
-                                else
-                                    echo "$(datetime) Error - $backup_dir/$vhostname-$timestamp.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
-                                fi
-                            else
-                                echo "$(datetime) Error - Directory $vhost does not exist"
-                            fi
-                        done
+        echo "$(datetime) Proceeding With Backing Up Vhost Defined Directorys"
 
-    echo "$(datetime) Starting The Database Backup Process"
+	if [ $vhost_backup_directory != "" ]; then
+        	vhost_backup_dir_new=$(echo $vhost_backup_directory | tr ',' '\n')
 
-	# MySQL Backups
-	if [ -d "$backup_dir" ]; then
-		echo "$(datetime) Creating Databse Backup Folder Under $backup_dir_db"
-		mkdir "$backup_dir_db"
+        	for vhost_backup_dir_n in $vhost_backup_dir_new; do
+                	if [ -d $vhost_backup_dir_n ]; then
+                        	vhostname=`echo "${vhost_backup_dir_n:1}" | sed 's/\//\-/g'`
+                        	if [ ! -f $backup_dir/$vhostname$timestamp.tar.gz ]; then
+                                	echo "$(datetime) Starting File Level Backup For $vhostname"
+                                	tar -C $vhost_backup_dir_n -zcf $backup_dir/$vhostname$timestamp.tar.gz .
+                                	echo "$(datetime) Site $vhostname has been succesfully backed up & Is Avalible Under $backup_dir/$vhostname-$timestamp.tar.gz"
+                        	else
+                               	 	echo "$(datetime) Error - $backup_dir/$vhostname$timestamp.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
+                        	fi
+                	else
+                        	echo "$(datetime) Error - Directory $vhost does not exist"
+                	fi
+        	done
 	else
-		echo "$(datetime) Error - Cannot Create Directory For Database Backup's Please Review The Logs"
-		exit 0
+		echo "$(datetime) No Vhost Directorys Defined Proceeding.."
+	fi	
+
+    	echo "$(datetime) Proceeding With Backing Up Configuration Defined Directorys"
+
+	if [ $backup_directory != "" ]; then
+		backup_dir_new=$(echo $backup_directory | tr ',' '\n')
+
+		for backup_dir_n in $backup_dir_new; do
+        		if [ -d $backup_dir_n ]; then
+                		vhostname=`echo "${backup_dir_n:1}" | sed 's/\//\-/g'`
+                        	if [ ! -f $backup_dir/$vhostname$timestamp.tar.gz ]; then
+                        		echo "$(datetime) Starting File Level Backup For $vhostname"
+                                	tar -C $backup_dir_n -zcf $backup_dir/$vhostname$timestamp.tar.gz .
+                                	echo "$(datetime) Site $vhostname has been succesfully backed up & Is Avalible Under $backup_dir/$vhostname-$timestamp.tar.gz"
+                        	else
+                        		echo "$(datetime) Error - $backup_dir/$vhostname-$timestamp.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
+                        	fi
+			else
+                        	echo "$(datetime) Error - Directory $vhost does not exist"
+                	fi
+        	done
+	else
+		echo "$(datetime) No Extra Directory's Defined For Backup Proceeding.."
 	fi
-	
-	databases=`mysql -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema|performance_schema)"`
-	echo "$(datetime) Proeeding With Backing Up The Following Databases -"
-	echo "$databases"
 
-	for db in $databases; do
-		echo "$(datetime) Starting Dump For Database '$db'"
-  		mysqldump --force --opt --databases $db | gzip > "$backup_dir_db/$db-$timestamp.gz"
-		echo "$(datetime) Completed Dump For Database '$db', this can be found at $backup_dir_db/$db-$timestamp.gz"
-	done
+    	echo "$(datetime) Starting The Database Backup Process"
 
-	# This needs updating to read off the config file
-
-    echo "$(datetime) Starting Clean Up Process For Old Backups"
-
-	    if [ -d "$backup_dir" ]; then
-		if [ -d "$backup_dir_db" ]; then
-		    if [ -d "/backups/$timestamp1" ]; then
-		        echo "$(datetime) Compressing Backup from $timestamp1"
-                        tar -C /backups/$timestamp1 -zcf /backups/$timestamp1.tar.gz .
-                        echo "$(datetime) Compression For Backup From $timestamp1 has been complete and is avalible in /backups/$timestamp1.tar.gz"
-			    if [ -f "/backups/$timestamp1.tar.gz" ]; then
-			        echo "$(datetime) Removing Old Backup Directory /backups/$timestamp1/"
-			        rm -rf /backups/$timestamp1/
-				    if [ -f "/backups/$timestamp2.tar.gz" ]; then
-			                echo "$(datetime) Removing Old Backup From /backups/$timestamp2.tar.gz"
-			                rm -rf /backups/$timestamp2.tar.gz
-				    else
-					echo "$(datetime) There Is No Backup Under /backups/$timestamp2.tar.gz. Proceeding.."
-				    fi
-			    else
-		    	        echo "$(datetime) Error - Please Check If Backup Archive For /backups/$timestamp1.tar.gz Completed Correctly"
-			    fi 
-		    else
-			echo "$(datetime) Error - Please Check That Recent Backups Have Processed Correctly - $timestamp1"
-		    fi
+	# Start of Database Backups
+	if [ $database_service == "non" ]; then
+		echo "$(datetime) There Are No Databases To Backup Proceeding.."
+	elif [ $database_service == "mysql" ]; then
+		if [ -d "$backup_dir" ]; then
+			echo "$(datetime) Creating Databse Backup Folder Under $backup_dir_db"
+			mkdir "$backup_dir_db"
 		else
-		    echo "$(datetime) Error - Not Continuing With Archive & Compression Due To Error In The Database Backup Process"
-		    echo "$(datetime) Error - Please Check That Recent Backups Have Processed Correctly"
+			echo "$(datetime) Error - Cannot Create Directory For Database Backup's Please Review The Logs"
+			exit 0
 		fi
-	    else
-		echo "$(datetime) Error - Not Continuing With Archive & Compression Due To Error In The File Level Backup Process"
-		echo "$(datetime) Error - Please Check That Recent Backups Have Processed Correctly"
-	    fi		
+	
+		databases=`mysql -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema|performance_schema)"`
+		list_exclude_db=' $exclude_databases'
+		echo "$(datetime) Proeeding With Backing Up The Following Databases -"
+		echo "$databases"
+
+		for db in $databases; do
+			echo "$(datetime) Starting Dump For Database '$db'"
+  			mysqldump --force --opt --databases $db | gzip > "$backup_dir_db/$db-$timestamp.gz"
+			echo "$(datetime) Completed Dump For Database '$db', this can be found at $backup_dir_db/$db-$timestamp.gz"
+		done
+	else
+		echo "$(datetime) Backing Up Databases Failed Proceeding"
+	fi
+
+	# Starting the removal and compression process
+	echo "$(datetime) Starting The Clean Up Process For Old Backups"
+	if [ $total_backup_days == "0" ]; then
+		echo "$(datetime) Backups Are Currently Set To Unlimited. Proceeding Without Any Removals"
+	else
+		find /backups/* -mtime +$total_backup_days -exec rm {} \;
+	fi
+
+	# Start Rsync
+	connct_status=$(ssh -o BatchMode=yes -o ConnectTimeout=5 -p $rsynctargetport $rsynctargetname@$rsynctarget echo ok 2>&1)
+
+	if [ $rsyncenabled == "yes" ]; then
+		echo "$(datetime) Starting Backup Procedure"
+		echo "$(datetime) Testing Connection To Remote Server"
+	        	if [[ $connct_status == ok ]] ; then
+                        	echo "Connection To Remote Server Succesfull"
+                                ssh -p $rsynctargetport $rsynctargetname@$rsynctarget "test -d $rsyncremotepath || mkdir -p $rsyncremotepath && exit"
+				if [ $compression_delay != "0" ]; then
+                                	rsync -avz -e "ssh -p $rsynctargetport" /backups/$timestamp $rsynctargetname@$rsynctarget:$rsyncremotepath > /dev/null
+				else
+					rsync -avz -e "ssh -p $rsynctargetport" /backups/$timestamp.tar.gz $rsynctargetname@$rsynctarget:$rsyncremotepath > /dev/null
+				fi
+                        elif [[ $connct_status == "Permission denied"* ]] ; then
+                        	echo "No Authorization To Access Remote Server - Please Check If SSH Key Has Been Added"
+                        else
+                        	echo "Can't Connect To The Remote Server To Complete Rsync, Please Attempt Troubleshooting."
+                        fi
+	elif [ $rsyncenabled == "no"]; then
+		echo "$(datetime) Rsync Remote Archive Is Not Enabled, Proceeding.."
+	else
+		echo "$(datetime) Rsync Remote Archive Is Not Enabled, Proceeding.."
+	fi	
 
     echo "$(datetime) Summary Of Completed Work;"
     find $backup_dir -type f -print0 | xargs -0r ls -lah | awk '{print $5,$9}'
