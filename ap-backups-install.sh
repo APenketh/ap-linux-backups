@@ -749,7 +749,7 @@
 
 	# Download The Backup Script
 	echo "Downloading The Backup Script, This Will Be Stored In \"/ap-scripts/\""
-	wget http://dl.apenketh.com/ap-backups/ap-backups.sh -P /ap-scripts/
+	wget http://dl.apenketh.com/ap-backups/ap-backups.sh -P /ap-scripts/ > /dev/null
 
 	jobtimehour=$(echo $jobtime | awk -F: '{print $1}')
 	jobtimemin=$(echo $jobtime | awk -F: '{print $2}')
