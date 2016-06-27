@@ -47,21 +47,21 @@
 
 	# Create scripts directory for storing the backup script
 	if [ ! -d "$scripts_dir" ]; then
-		mkdir $scripts_dir
+		mkdir -p $scripts_dir
 		echo "$Creating Directory $scripts_dir"
 	else
 		echo "Great! $scripts_dir already exists"
 	fi
 	#Create log directory for putting the installation log and also the backup logs
 	if [ ! -d "$log_dir" ]; then
-		mkdir $log_dir
+		mkdir -p $log_dir
 	    	echo "$Creating Directory $log_dir"
 	else
 	    	echo "Great! $log_dir already exists"
 	fi
         #Create config directory for putting the configuration file
         if [ ! -d "$backupconfigdir" ]; then
-            	mkdir $backupconfigdir
+            	mkdir -p $backupconfigdir
             	echo "Creating Directory $backupconfigdir"
         else
             	echo "Great! $backupconfigdir already exists"
