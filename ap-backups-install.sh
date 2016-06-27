@@ -4,9 +4,9 @@
 	set -e
 
 	# Script Varibles
-	scripts_dir="/ap-backups/"
-	log_dir="/var/log/ap-backups/"
-	backupscript="/ap-backups/ap-backups.sh"
+	scripts_dir="/ap-scripts/ap-backups/"
+	log_dir="/var/log/ap-scripts/"
+	backupscript="/ap-scripts/ap-backups/ap-backups.sh"
 	backupconfig="/etc/ap-scripts/ap-backups-main.conf"
 	backupconfigold="/etc/ap-scripts/ap-backups-main.old"
 	backupconfigdir="/etc/ap-scripts/"
@@ -747,8 +747,9 @@
 	   	newconfig
         fi
 
-	# Create backup script - Externally downloaded?
-	# wget dl.apenketh.com/ap-scripts/ap-backups.sh /ap-scripts/
+	# Download The Backup Script
+	echo "Downloading The Backup Script, This Will Be Stored In \"/ap-scripts/\""
+	wget http://dl.apenketh.com/ap-backups/ap-backups.sh -P /ap-scripts/
 
 	jobtimehour=$(echo $jobtime | awk -F: '{print $1}')
 	jobtimemin=$(echo $jobtime | awk -F: '{print $2}')
