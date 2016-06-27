@@ -155,11 +155,11 @@
 		echo "$(datetime) Testing Connection To Remote Server"
 	        	if [[ $connct_status == ok ]] ; then
                         	echo "Connection To Remote Server Succesfull"
-                                ssh -p $rsynctargetport $rsynctargetname@$rsynctarget "test -d $rsyncremotepath || mkdir -p $rsyncremotepath && exit"
+                                ssh -p $rsynctargetport $rsynctargetname@$rsynctarget "test -d $rsyncremotepath || mkdir -p $rsyncremotepath$localhostname/ && exit"
 				if [ $compression_delay != "0" ]; then
-                                	rsync -avz -e "ssh -p $rsynctargetport" /backups/$timestamp $rsynctargetname@$rsynctarget:$rsyncremotepath > /dev/null
+                                	rsync -avz -e "ssh -p $rsynctargetport" /backups/$timestamp $rsynctargetname@$rsynctarget:$rsyncremotepath$localhostname/ > /dev/null
 				else
-					rsync -avz -e "ssh -p $rsynctargetport" /backups/$timestamp.tar.gz $rsynctargetname@$rsynctarget:$rsyncremotepath > /dev/null
+					rsync -avz -e "ssh -p $rsynctargetport" /backups/$timestamp.tar.gz $rsynctargetname@$rsynctarget:$rsyncremotepath$localhostname/ > /dev/null
 				fi
                         elif [[ $connct_status == "Permission denied"* ]] ; then
                         	echo "No Authorization To Access Remote Server - Please Check If SSH Key Has Been Added"
