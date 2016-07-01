@@ -67,7 +67,7 @@
 
         echo "$(datetime) Proceeding With Backing Up Vhost Defined Directorys"
 
-	if [ $vhost_backup_directory != "" ]; then
+	if [[ $vhost_backup_directory != "" ]]; then
         	vhost_backup_dir_new=$(echo $vhost_backup_directory | tr ',' '\n')
 
         	for vhost_backup_dir_n in $vhost_backup_dir_new; do
@@ -90,7 +90,7 @@
 
     	echo "$(datetime) Proceeding With Backing Up Configuration Defined Directorys"
 
-	if [ $backup_directory != "" ]; then
+	if [[ $backup_directory != "" ]]; then
 		backup_dir_new=$(echo $backup_directory | tr ',' '\n')
 
 		for backup_dir_n in $backup_dir_new; do
@@ -114,7 +114,7 @@
     	echo "$(datetime) Starting The Database Backup Process"
 
 	# Start of Database Backups
-	if [ $database_service == "non" ]; then
+	if [[ $database_service == "non" ]]; then
 		echo "$(datetime) There Are No Databases To Backup Proceeding.."
 	elif [ $database_service == "mysql" ]; then
 		if [ -d "$backup_dir" ]; then
@@ -141,7 +141,7 @@
 
 	# Starting the removal and compression process
 	echo "$(datetime) Starting The Clean Up Process For Old Backups"
-	if [ $total_backup_days == "0" ]; then
+	if [[ $total_backup_days == "0" ]]; then
 		echo "$(datetime) Backups Are Currently Set To Unlimited. Proceeding Without Any Removals"
 	else
 		find /backups/* -mtime +$total_backup_days -exec rm {} \;
@@ -150,7 +150,7 @@
 	# Start Rsync
 	connct_status=$(ssh -o BatchMode=yes -o ConnectTimeout=5 -p $rsynctargetport $rsynctargetname@$rsynctarget echo ok 2>&1)
 
-	if [ $rsyncenabled == "yes" ]; then
+	if [[ $rsyncenabled == "yes" ]]; then
 		echo "$(datetime) Starting Backup Procedure"
 		echo "$(datetime) Testing Connection To Remote Server"
 	        	if [[ $connct_status == ok ]] ; then
