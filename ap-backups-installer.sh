@@ -571,30 +571,6 @@
 			fi
 		done
 
-	    	echo "How Many Days Do You Wish To Wait Until Backups Are Compressed. Enter 0 To Compress Backups When They Are Created."
-                while true ; do
-                        if [ "$compressdays_true" = "Next" ]; then
-                            	break;
-                        else
-                            	read -e compressdays
-                                if [[ "$compressdays" =~ ^[0-9]{1,3}$ ]]; then
-                                    	while true; do
-                                    	read -p "You Have Entered $compressdays Day's Is That Correct. Please Select [y/N]" yn
-                                        	case $yn in
-                                            		[Yy]* ) echo "compression_delay=\"$compressdays\"" >> $backupconfig;
-                                                    		compressdays_true="Next";
-                                                    		break;;
-                                            		[Nn]* ) echo "Please Re-Enter The Correct Amount Of Days";
-                                                    		break;;
-                                            		* ) echo "Please Select [y/N]";;
-                                        	esac
-                                    	done
-                                else
-                                    	echo "Please Enter A Number Between 0-999"
-                                fi
-                        fi
-		done
-
 		# Call Function To Set-Up Rsync config (Called a seperate function so that we may recall if changes are needed when info is checked)
 		rsyncconfig
 
