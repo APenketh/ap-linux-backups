@@ -23,7 +23,6 @@
         rsyncdir="/ap-scripts/backups/archive/"
         rsyncenabled=""
 	rsyncport="22"
-	jobtime="10:00"
 
 	# We are defining the date/time for our logging in a function so that it is updated as the event occours instead of a variable where it would only keep the time where it was first stored
         datetime() {
@@ -727,16 +726,7 @@
 	echo "Downloading The Backup Script, This Will Be Stored In \"/ap-scripts/\""
 	wget http://dl.apenketh.com/ap-backups/ap-backups.sh -P /ap-scripts/ > /dev/null
 
-	jobtimehour=$(echo $jobtime | awk -F: '{print $1}')
-	jobtimemin=$(echo $jobtime | awk -F: '{print $2}')
-
-	# Creating Cronjob for running the backup script
-	if crontab -l | grep "ap-backups.sh"; then 
-	    	echo "Cron Job Is Already Set-up"; 
-	else
-	    	echo "Creating Cron Job To Automatically Run The Backup At $jobtime Hours Server Time Every Night"
-	    	crontab -l | { cat; echo "$jobtimemin $jobtimehour * * *  /bin/bash $backupscript"; } | crontab -
-	fi
+	echo "Installation of AP-Backups has been succesfully completed"
 
     	echo ""
     	echo "*****************************************************************"
