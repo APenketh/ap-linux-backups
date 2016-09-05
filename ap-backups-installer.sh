@@ -4,25 +4,25 @@
 	set -e
 
 	# Script Varibles
-	scripts_dir="/ap-scripts/ap-backups/"
-	log_dir="/var/log/ap-scripts/"
-	backupscript="/ap-scripts/ap-backups/ap-backups.sh"
-	backupconfig="/etc/ap-scripts/ap-backups-main.conf"
-	backupconfigold="/etc/ap-scripts/ap-backups-main.old"
-	backupconfigdir="/etc/ap-scripts/"
-	webservice=""
-	supportedwebservice="nginx, apache2, httpd"
-	backup_dir_hold=""
-	vhost_backup_dir_hold=""
-	excludedb_hold=""
-	databaseservice=""
-	supporteddatabase="mysql"
-        rsynchost=$(hostname)
-        rsyncaddress="127.0.0.1"
-        rsyncusername="ap-backups"
-        rsyncdir="/ap-scripts/backups/archive/"
-        rsyncenabled=""
-	rsyncport="22"
+	SCRIPTS_DIR="/opt/ap-backups/"
+	LOG_DIR="/var/log/ap-backups/"
+	BACKUPSCRIPT="/opt/ap-backups/ap-backups.sh"
+	BACKUPCONFIG="/etc/ap-scripts/ap-backups-main.conf"
+	BACKUPCONFIGOLD="/etc/ap-scripts/ap-backups-main.old"
+	BACKUPCONFIGDIR="/etc/ap-scripts/"
+	WEBSERVICE=""
+	SUPPORTEDWEBSERVICE="nginx, apache2, httpd"
+	BACKUP_DIR_HOLD=""
+	VHOST_BACKUP_DIR_HOLD=""
+	EXCLUDEDB_HOLD=""
+	DATABASESERVICE=""
+	SUPPORTEDDATABASE="mysql"
+        RSYNCHOST=$(hostname)
+        RSYNCADDRESS="127.0.0.1"
+        RSYNCUSERNAME="ap-backups"
+        RSYNCDIR="/ap-scripts/backups/archive/"
+        RSYNCENABLED=""
+	RSYNCPORT="22"
 
 	# We are defining the date/time for our logging in a function so that it is updated as the event occours instead of a variable where it would only keep the time where it was first stored
         datetime() {
@@ -35,8 +35,8 @@
 	echo ""
 
 	# Sanity check to see if this script is already installed
-	if [ -f "$backupscript" ]; then
-		echo "Error - You Alrady Have AP-Backups Installed Please Check $backupscript Location"
+	if [ -f "$BACKUPSCRIPT" ]; then
+		echo "Error - You Alrady Have AP-Backups Installed Please Check $BACKUPSCRIPT Location"
 		echo "*****************************************************************"
 		echo ""
 		exit 0
@@ -45,48 +45,48 @@
 	fi
 
 	# Create scripts directory for storing the backup script
-	if [ ! -d "$scripts_dir" ]; then
-		mkdir -p $scripts_dir
-		echo "$Creating Directory $scripts_dir"
+	if [ ! -d "$SCRIPTS_DIR" ]; then
+		mkdir -p $SCRIPTS_DIR
+		echo "Creating Directory $SCRIPTS_DIR"
 	else
-		echo "Great! $scripts_dir already exists"
+		echo "Great! $SCRIPTS_DIR already exists"
 	fi
 	#Create log directory for putting the installation log and also the backup logs
-	if [ ! -d "$log_dir" ]; then
-		mkdir -p $log_dir
-	    	echo "$Creating Directory $log_dir"
+	if [ ! -d "$LOG_DIR" ]; then
+		mkdir -p $LOG_DIR
+	    	echo "Creating Directory $LOG_DIR"
 	else
-	    	echo "Great! $log_dir already exists"
+	    	echo "Great! $LOG_DIR already exists"
 	fi
         #Create config directory for putting the configuration file
-        if [ ! -d "$backupconfigdir" ]; then
-            	mkdir -p $backupconfigdir
-            	echo "Creating Directory $backupconfigdir"
+        if [ ! -d "$BACKUPCONFIGDIR" ]; then
+            	mkdir -p $BACKUPCONFIGDIR
+            	echo "Creating Directory $BACKUPCONFIGDIR"
         else
-            	echo "Great! $backupconfigdir already exists"
+            	echo "Great! $BACKUPCONFIGDIR already exists"
         fi
 
 	detectingwebservice()	{
 		while true; do
-                    	read -p "We Have Detected You Are Running The Following Webservice On This Server '$webservice' Is This Correct? Please Select [y/N]" yn
+                    	read -p "We Have Detected You Are Running The Following Webservice On This Server '$WEBSERVICE' Is This Correct? Please Select [y/N]" yn
                     	case $yn in
                     	    	[Yy]* )
-                                	echo "webservice=\"$webservice\"" >> $backupconfig;
+                                	echo "WEBSERVICE=\"$WEBSERVICE\"" >> $BACKUPCONFIG;
                                 	break;;
                     	    	[Nn]* )
-					echo "Please Enter The Webservice That You Will Be Using, The Supported Webservices's are: $supportedwebservice. If You Do Not Plan On Using A Webservice Please Enter "non""
+					echo "Please Enter The Webservice That You Will Be Using, The Supported Webservices's are: $SUPPORTEDWEBSERVICE. If You Do Not Plan On Using A Webservice Please Enter "non""
                                 	while true ; do
-                            			read -e newservice
-                                		if [ "$newservice" != "nginx" -a "$newservice" != "apache2" -a "$newservice" != "httpd" -a "$newservice" != "non" ]; then
+                            			read -e NEWSERVICE
+                                		if [ "$NEWSERVICE" != "nginx" -a "$NEWSERVICE" != "apache2" -a "$NEWSERVICE" != "httpd" -a "$NEWSERVICE" != "non" ]; then
                                     	    		while true; do
-                                        		read -p "You Have Entered The Webservice $newservice. Is This Correct? Please Select [y/N]" yn
+                                        		read -p "You Have Entered The Webservice $NEWSERVICE. Is This Correct? Please Select [y/N]" yn
                                             	    		case $yn in
                                             				[Yy]* ) 
-							    			if [ "$newservice" = "nginx" -a "$newservice" = "apache2" -a "$newservice" = "httpd" -a "$newservice" = "non" ]; then
-							    				echo "webservice=\"$newservice\"" >> $backupconfig;
+							    			if [ "$NEWSERVICE" = "nginx" -a "$NEWSERVICE" = "apache2" -a "$NEWSERVICE" = "httpd" -a "$NEWSERVICE" = "non" ]; then
+							    				echo "webservice=\"$NEWSERVICE\"" >> $BACKUPCONFIG;
                                                     	    				break;
 							    			else
-											echo "Please Enter A Valid WebHost - Such As $supportedwebservice" or 'non';
+											echo "Please Enter A Valid WebHost - Such As $SUPPORTEDWEBSERVICE" or 'non';
 											break;
 							    			fi
 											break;;
@@ -99,7 +99,7 @@
                                     	    		done
                                 		else
                                     	    		echo "We Have Finished Reviewing The Webservice. Proceeding To The Next Step.."
-					    		echo "webservice=\"$newservice\"" >> $backupconfig
+					    		echo "webservice=\"$NEWSERVICE\"" >> $BACKUPCONFIG
                                     	    		break;
                                 		fi
                             		done
@@ -112,25 +112,25 @@
 
 	detectingdatabaseservice() 	{
                 while true; do
-                        read -p "We Have Detected You Are Running The Following Database Service On This Server '$databaseservice' Is This Correct? Please Select [y/N]" yn
+                        read -p "We Have Detected You Are Running The Following Database Service On This Server '$DATABASESERVICE' Is This Correct? Please Select [y/N]" yn
                         case $yn in
                                 [Yy]* )
-                                        echo "database_service=\"$databaseservice\"" >> $backupconfig;
+                                        echo "DATABASE_SERVICE=\"$DATABASESERVICE\"" >> $BACKUPCONFIG;
                                         break;;
                                 [Nn]* )
-                                        echo "Please Enter The Database Service That You Will Be Using, The Supported Database Service's are: $supporteddatabase. If You Do Not Plan On Using A Database Please Enter "non""
+                                        echo "Please Enter The Database Service That You Will Be Using, The Supported Database Service's are: $SUPPORTEDDATABASE. If You Do Not Plan On Using A Database Please Enter "non""
                                         while true ; do
-                                                read -e newdatab
-                                                if [ "$newdatab" != "mysql" -a "$newdatab" != "non" ]; then
+                                                read -e NEWDATAB
+                                                if [ "$NEWDATAB" != "mysql" -a "$NEWDATAB" != "non" ]; then
                                                         while true; do
-                                                        read -p "You Have Entered The Database Service $newdatab. Is This Correct? Please Select [y/N]" yn
+                                                        read -p "You Have Entered The Database Service $NEWDATAB. Is This Correct? Please Select [y/N]" yn
                                                                 case $yn in
                                                                         [Yy]* )
-                                                                                if [ "$newdatab" = "mysql" -a "$newdatab" = "non" ]; then
-                                                                                        echo "database_service=\"$newdatab\"" >> $backupconfig;
+                                                                                if [ "$NEWDATAB" = "mysql" -a "$NEWDATAB" = "non" ]; then
+                                                                                        echo "DATABASE_SERVICE=\"$NEWDATAB\"" >> $BACKUPCONFIG;
                                                                                         break;
                                                                                 else
-                                                                                        echo "Unfortunately The Value You Entered Is Not Supported. Please Enter A Valid Database - Such As $supporteddatabase" or 'non';
+                                                                                        echo "Unfortunately The Value You Entered Is Not Supported. Please Enter A Valid Database - Such As $SUPPORTEDDATABASE" or 'non';
                                                                                         break;
                                                                                 fi
                                                                                         break;;
@@ -143,7 +143,7 @@
                                                         done
                                                 else
                                                         echo "We Have Finished Reviewing The Database Service. Proceeding To The Next Step.."
-                                                        echo "database_service=\"$newdatab\"" >> $backupconfig
+                                                        echo "DATABASE_SERVICE=\"$NEWDATAB\"" >> $BACKUPCONFIG
                                                         break;
                                                 fi
                                         done
@@ -158,25 +158,25 @@
 	rsyncconfig()	{
 
                 # Start of the setup of the rsync parameter's
-                echo "" >> $backupconfig
-                echo "# Rsync Settings" >> $backupconfig
+                echo "" >> $BACKUPCONFIG
+                echo "# Rsync Settings" >> $BACKUPCONFIG
 
                 while true; do
                         read -p "Do You Wish To Setup Rsync To Archive The Backups In Another Server? Please Select [y/N]" yn
                         case $yn in
                                 [Yy]* ) echo "Proceeding With Setting Up Rsync.";
-                                        rsyncenabled="yes";
-                                        echo "rsyncenabled=\"yes\"" >> $backupconfig;
+                                        RSYNCENABLED="yes";
+                                        echo "RSYNCENABLED=\"yes\"" >> $BACKUPCONFIG;
                                         break;;
                                 [Nn]* ) echo "Proceeding Without Setting Up Rsync.";
-                                        rsyncenabled="no";
-                                        echo "rsyncenabled=\"no\"" >> $backupconfig;
+                                        RSYNCENABLED="no";
+                                        echo "RSYNCENABLED=\"no\"" >> $BACKUPCONFIG;
                                         break;;
                                 * ) echo "Please Select [y/N]";;
                         esac
                 done
 
-                if [ $rsyncenabled == "yes" ]; then
+                if [ $RSYNCENABLED == "yes" ]; then
                         # Identifying The Hostname They Wish To Use
                         while true; do
                                 read -p "Please Select How You Wish To Identify This Server, Do You Wish To Use The Current Hostname $rsynchost. Please Select [y/N]" yn
@@ -635,33 +635,6 @@
 		fi
 
 		echo "" >> $backupconfig
-		echo "# Cron Job Settings" >> $backupconfig
-
-                # Define what time the user wants to run the backup job
-                echo "Please Enter The Time That You Want To Backup Job To Run In The Following Format [XX:XX]"
-	        while true; do
-                      	if [[ $jobtime != $newjobtime ]]; then
-                        read -e newjobtime
-				if [[ "$newjobtime" =~ ^[0-2][0-9]:[0-9][0-9]$ ]]; then
-                        		while true; do
-                                	read -p "You Have Entered The Time \"$newjobtime\". Is This Correct? Please Select [y/N]" yn
-                                		case $yn in
-                                        		[Yy]* ) jobtime="$newjobtime";
-                                                        	echo "Using \"$newjobtime\" As The Remote Username.";
-                                                        	echo "cronjob_time=\"$jobtime\"" >> $backupconfig;
-                                                        	break;;
-                                               		[Nn]* ) echo "Please Enter Your Corrected Time.";
-                                                        	break;;
-                                                	* ) echo "Please Select [y/N]";;
-                                        	esac
-                                	done
-				else
-					echo "Please Enter A Time In The Following Format XX:XX"
-				fi
-                        else
-                                break;
-                        fi
-         	done
 			}
 
 	# Create function for proceeding with old config file, at this point we will check the config file incase there is some modification that we do not want (this will be also done on the fly while the script is running).

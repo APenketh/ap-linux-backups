@@ -26,6 +26,7 @@
                 trap 'exec 2>&4 1>&3' 0 1 2 3
                 exec 1>>/var/log/ap-backups/ap-backups.log 2>&1
                 # Redirect stdout to file log.out then redirect stderr to stdout. Note that the order is important when you want them going to the same file. stdout must be redirected before stderr is redirected to stdout
+		local BACKUP_DIR="/opt/ap-backups/backups/$TIMESTAMP"
 		local TIMESTAMP=$(date +"%F")
         	CONNCT_STATS=$(ssh -o BatchMode=yes -o ConnectTimeout=5 -p $RSYNCTARGETPORT $RSYNCTARGETNAME@$RSYNCTARGET echo ok 2>&1)
         	if [[ $RSYNCENABLED == "yes" ]]; then
@@ -34,7 +35,7 @@
                         if [[ $CONNCT_STATS == ok ]] ; then
                         	echo "Connection To Remote Server Succesfull"
                                 ssh -p $RSYNCTARGETPORT $RSYNCTARGETNAME@$RSYNCTARGET "test -d $RSYNCREMOTEPATH || mkdir -p $RSYNCREMOTEPATH$LOCALHOSTNAME/ && exit"
-                                rsync -avz -e "ssh -p $RSYNCTARGETPORT" /backups/$TIMESTAMP $RSYNCTARGETNAME@$RSYNCTARGET:$RSYNCREMOTEPATH$LOCALHOSTNAME/ > /dev/null
+                                rsync -avz -e "ssh -p $RSYNCTARGETPORT" $BACKUP_DIR $RSYNCTARGETNAME@$RSYNCTARGET:$RSYNCREMOTEPATH$LOCALHOSTNAME/ > /dev/null
                         elif [[ $CONNCT_STATS == "Permission denied"* ]] ; then
                                 echo "No Authorization To Access Remote Server - Please Check If SSH Key Has Been Added"
                         else
@@ -56,7 +57,7 @@
     		# Redirect stdout to file log.out then redirect stderr to stdout. Note that the order is important when you want them going to the same file. stdout must be redirected before stderr is redirected to stdout
 
     		local TIMESTAMP=$(date +"%F")
-    		local BACKUP_DIR="/backups/$TIMESTAMP"
+    		local BACKUP_DIR="/opt/ap-backups/backups/$TIMESTAMP"
     		local BACKUP_DIR_DB="$BACKUP_DIR/databases"
     		local BACKUPCONFIG="/etc/ap-scripts/ap-backups-main.conf"
     		local TIMESTAMP1=$(date +"%F" --date='1 day ago')
@@ -181,8 +182,8 @@
                 	echo "$(datetime) Backups Are Currently Set To Unlimited. Proceeding Without Any Removals"
         	else
                 	echo "$(datetime) Removing The Following Directory's"
-                	find /backups/* -mtime +"$TOTAL_DAYS_TO_REMOVE" -print;
-                	find /backups/* -mtime +"$TOTAL_DAYS_TO_REMOVE" -delete;
+                	find /opt/ap-backups/backups/* -mtime +"$TOTAL_DAYS_TO_REMOVE" -print;
+                	find /opt/ap-backups/backups/* -mtime +"$TOTAL_DAYS_TO_REMOVE" -delete;
                 	echo "$(datetime) Backup Removal Complete"
         	fi
 
@@ -198,6 +199,7 @@
 
 # This function is to update any vhosts as per the config file
 	vhost_updater() {
+		echo "vhost updater holder"
                 	}
 
 	help_option()	{
