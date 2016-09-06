@@ -218,7 +218,7 @@
                                         read -p "You Have Entered The Address \"$NEWRSYNCADDRESS\". Is This Correct? Please Select [y/N]" yn
                                                 case $yn in
                                                         [Yy]* ) RSYNCADDRESS="$NEWRSYNCADDRESS";
-                                                                echo "Using \"$NEWRSYNCADDRESS\" As The Local Hostname Identifier.";
+                                                                echo "Using \"$NEWRSYNCADDRESS\" As The Remote Host Backup Server.";
                                                                 echo "RSYNCTARGET=\"$RSYNCADDRESS\"" >> $BACKUPCONFIG;
                                                                 break;;
                                                         [Nn]* ) echo "Please Enter Your Corrected Address.";
@@ -575,9 +575,10 @@
 
 		# Give the user the ability to check there connection details and see if it works as intended.
 		if [ $RSYNCENABLED == "yes" ]; then
-			# Seeing if an SSH Key current edits, if so printing it out, if not then asking the user if they want to generate one
+			# Seeing if an SSH Key current exists, if so printing it out, if not then asking the user if they want to generate one
 			if [ -f ~/.ssh/id_rsa.pub ]; then
-				echo "We Have Detected That You Already Have An SSH Key Setup Under $SSHKEY, You Will Need This When Setting Up Rsync."
+				echo "We Have Detected That You Already Have An SSH Key Setup Under $SSHKEY, You Will Need This When Setting Up Rsync. Please find this displayed below;"
+				cat ~/.ssh/id_rsa.pub
 			else
                         	while true; do
                                 	read -p "We can't find a Public Key Associated With This User, Do You Wish To Create One? Please Select [y/N]" yn
@@ -593,13 +594,12 @@
                         	done
 			fi
 
-			STATUS=$(ssh -o BatchMode=yes -o ConnectTimeout=5 -p $RSYNCPORT $RSYNCUSERNAME@$RSYNCADDRESS echo ok 2>&1)
-
 			if [ -f ~/.ssh/id_rsa.pub ]; then
                                 while true; do
                                         read -p "Please Make Sure Your Public SSH Key Is On The Allowed List On The Remote Server So That We Can Test The Connection. When Finished Please Enter "y". If You Wish To Skip Testing The Connection Please Select " yn
                                         case $yn in
                                                 [Yy]* ) echo "Testing Connection To Remote Server"
+							STATUS=$(ssh -o BatchMode=yes -o ConnectTimeout=5 -p $RSYNCPORT $RSYNCUSERNAME@$RSYNCADDRESS echo ok 2>&1)
                                 			if [[ $STATUS == ok ]] ; then
                                         			echo "Connection To Remote Server Succesfull"
                                         			while true; do
