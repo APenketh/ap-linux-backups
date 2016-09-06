@@ -577,9 +577,7 @@
 		if [ $RSYNCENABLED == "yes" ]; then
 			# Seeing if an SSH Key current edits, if so printing it out, if not then asking the user if they want to generate one
 			if [ -f ~/.ssh/id_rsa.pub ]; then
-				echo "We Have Detected That You Already Have An SSH Key Setup Under $SSHKEY, You Will Need This When Setting Up Rsync So We Have Printed This For You Below;"
-				cat ~/.ssh/id_rsa.pub
-				break;
+				echo "We Have Detected That You Already Have An SSH Key Setup Under $SSHKEY, You Will Need This When Setting Up Rsync."
 			else
                         	while true; do
                                 	read -p "We can't find a Public Key Associated With This User, Do You Wish To Create One? Please Select [y/N]" yn
