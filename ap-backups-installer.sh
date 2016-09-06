@@ -212,7 +212,7 @@
                         # Address Of Remote Server To Store The Backups
                         echo "Please Enter The Address Of The Server You Wish To Backup To:"
                         while true; do
-                                if [[ $RSYNCADDRESS != $RSYNCADDRESS ]]; then
+                                if [[ $RSYNCADDRESS != $NEWRSYNCADDRESS ]]; then
                                 read -e NEWRSYNCADDRESS
                                         while true; do
                                         read -p "You Have Entered The Address \"$NEWRSYNCADDRESS\". Is This Correct? Please Select [y/N]" yn
@@ -579,6 +579,7 @@
 			if [ -f ~/.ssh/id_rsa.pub ]; then
 				echo "We Have Detected That You Already Have An SSH Key Setup Under $SSHKEY, You Will Need This When Setting Up Rsync So We Have Printed This For You Below;"
 				cat ~/.ssh/id_rsa.pub
+				break;
 			else
                         	while true; do
                                 	read -p "We can't find a Public Key Associated With This User, Do You Wish To Create One? Please Select [y/N]" yn
