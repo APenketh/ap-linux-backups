@@ -175,6 +175,9 @@
                 	echo "$(datetime) Backing Up Databases Failed Proceeding"
         	fi
 
+                # Call rsync job to be ran
+                rsync_job;
+
         	# Starting the removal and compression process
         	local TOTAL_DAYS_TO_REMOVE=$(($TOTAL_BACKUP_DAYS-1))
         	echo "$(datetime) Starting The Clean Up Process For Old Backups"
@@ -187,9 +190,6 @@
                 	echo "$(datetime) Backup Removal Complete"
         	fi
 
-		# Call rsync job to be ran
-		rsync_job;
-	
 		echo "$(datetime) Summary Of Completed Work;"
     		find $BACKUP_DIR -type f -print0 | xargs -0r ls -lah | awk '{print $5,$9}'
 
