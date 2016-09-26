@@ -113,9 +113,9 @@
                         	if [ -d $VHOST_BACKUP_DIR_N ]; then
                                 	local VHOSTNAME=`echo "${VHOST_BACKUP_DIR_N:1}" | sed 's/\//\-/g'`
                                 	if [ ! -f $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz ]; then
-                                        	echo "$(datetime) Starting File Level Backup For $VHOSTNAME"
+                                        	echo "$(datetime) Starting File Level Backup For $VHOSTNAME$TIMESTAMP"
                                         	tar -C $VHOST_BACKUP_DIR_N -zcf $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz .
-                                        	echo "$(datetime) Site $VHOSTNAME has been succesfully backed up & Is Avalible Under $BACKUP_DIR/$VHOSTNAME-$TIMESTAMP.tar.gz"
+                                        	echo "$(datetime) Site $VHOSTNAME has been succesfully backed up & Is Avalible Under $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz"
                                 	else
                                         	echo "$(datetime) Error - $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
                                 	fi
