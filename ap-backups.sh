@@ -80,9 +80,10 @@
     		echo "$(datetime) Checking For Enough Avalible Disk Space To Perform The Backup. This Does Not Take Into Account Any New Backup Items Added Since Last Succesful Backup."
 
         	local TOTAL_SPACE=$(df -m $BACKUP_DIR | awk '{print $4}' | grep -v "Available")
+		local BACKUP_DIR1="/opt/ap-backups/backups/"
 
-        	if [ -d "/backups/$TIMESTAMP1" ]; then
-                	local PREV_BKUP_TOTAL=$(du -mxc /backups/$TIMESTAMP1 | grep "total" | awk '{print $1}')
+        	if [ -d "$BACKUP_DIR1$TIMESTAMP1" ]; then
+                	local PREV_BKUP_TOTAL=$(du -mxc $BACKUP_DIR1$TIMESTAMP1 | grep "total" | awk '{print $1}')
                 	echo "$(datetime) Previous Backup Total Is $PREV_BKUP_TOTAL M & Total Avalible Space Is $TOTAL_SPACE M"
                         if [ "$PREV_BKUP_TOTAL" -le "$TOTAL_SPACE" ]; then
                                 echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
@@ -90,8 +91,8 @@
                                 echo "$(datetime) There Is Approxmitly Not Enough Space To Complete This Backup, Please Check The File System For Disk Usage"
                                 exit 0
                         fi
-        	elif [ -f "/backups/$timestamp1.tar.gz" ]; then
-                	local PREV_BKUP_TOTAL_COMP=$(du -mxc /backups/$TIMESTAMP1.tar.gz | grep "total" | awk '{print $1}')
+        	elif [ -f "$BACKUP_DIR1$timestamp1.tar.gz" ]; then
+                	local PREV_BKUP_TOTAL_COMP=$(du -mxc $BACKUP_DIR1$TIMESTAMP1.tar.gz | grep "total" | awk '{print $1}')
                 echo "$(datetime) Previous Backup Total Is $PREV_BKUP_TOTAL_COMP M & Total Avalible Space Is $TOTAL_SPACE M"
                         if [ "$PREV_BKUP_TOTAL_COMP" -le "$TOTAL_SPACE" ]; then
                                 echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
