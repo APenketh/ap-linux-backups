@@ -77,32 +77,44 @@
           		exit 0
         	fi
 
-    		echo "$(datetime) Checking For Enough Avalible Disk Space To Perform The Backup. This Does Not Take Into Account Any New Backup Items Added Since Last Succesful Backup."
+		echo "$(datetime) Checking For Enough Avalible Disk Space To Perform The Backup."
+                if [[ $VHOST_BACKUP_DIRECTORY != "" ]]; then
+                        local VHOST_BACKUP_DIR_TMP=$(echo $VHOST_BACKUP_DIRECTORY | tr ',' '\n')
+                        for VHOST_BACKUP_DIR_T in $VHOST_BACKUP_DIR_TMP; do
+                                if [ -d $VHOST_BACKUP_DIR_T ]; then
+                                        local VHOST_TMP_SPACE=$(du -mxc $VHOST_BACKUP_DIR_T | grep "total" | awk '{print $1}')
+                                        local VHOST_TOTAL_SPACE=$(($VHOST_TOTAL_SPACE + $VHOST_TMP_SPACE))
+                                else
+                                        echo "$(datetime) Error - Directory $VHOST_BACKUP_DIR_T does not exist"
+                                fi
+                        done
+                else
+                        echo "$(datetime) No Vhost Directorys Defined Proceeding.."
+                fi
 
-        	local TOTAL_SPACE=$(df -m $BACKUP_DIR | awk '{print $4}' | grep -v "Available")
-		local BACKUP_DIR1="/opt/ap-backups/backups/"
+                if [[ $BACKUP_DIRECTORY != "" ]]; then
+                        local BACKUP_DIR_TMP=$(echo $BACKUP_DIRECTORY | tr ',' '\n')
+                        for BACKUP_DIR_T in $BACKUP_DIR_TMP; do
+                                if [ -d $BACKUP_DIR_T ]; then
+                                        local OTHER_TMP_SPACE=$(du -mxc $BACKUP_DIR_T | grep "total" | awk '{print $1}')
+                                        local OTHER_TOTAL_SPACE=$(($OTHER_TOTAL_SPACE + $OTHER_TMP_SPACE))
+                                else
+                                        echo "$(datetime) Error - Directory $BACKUP_DIR_T does not exist"
+                                fi
+                        done
+                else
+                        echo "$(datetime) No Vhost Directorys Defined Proceeding.."
+                fi
 
-        	if [ -d "$BACKUP_DIR1$TIMESTAMP1" ]; then
-                	local PREV_BKUP_TOTAL=$(du -mxc $BACKUP_DIR1$TIMESTAMP1 | grep "total" | awk '{print $1}')
-                	echo "$(datetime) Previous Backup Total Is $PREV_BKUP_TOTAL M & Total Avalible Space Is $TOTAL_SPACE M"
-                        if [ "$PREV_BKUP_TOTAL" -le "$TOTAL_SPACE" ]; then
-                                echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
-                        else
-                                echo "$(datetime) There Is Approxmitly Not Enough Space To Complete This Backup, Please Check The File System For Disk Usage"
-                                exit 0
-                        fi
-        	elif [ -f "$BACKUP_DIR1$timestamp1.tar.gz" ]; then
-                	local PREV_BKUP_TOTAL_COMP=$(du -mxc $BACKUP_DIR1$TIMESTAMP1.tar.gz | grep "total" | awk '{print $1}')
-                echo "$(datetime) Previous Backup Total Is $PREV_BKUP_TOTAL_COMP M & Total Avalible Space Is $TOTAL_SPACE M"
-                        if [ "$PREV_BKUP_TOTAL_COMP" -le "$TOTAL_SPACE" ]; then
-                                echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
-                        else
-                                echo "$(datetime) There Is Approxmitly Not Enough Space To Complete This Backup, Please Check The File System For Disk Usage"
-                                exit 0
-                        fi
-        	else
-                	echo "$(datetime) There Is No Previous Backups To Estimate The Backup Size, Proceeding..."
-        	fi
+                local BACKUP_TOTAL_SPACE=$(($VHOST_TOTAL_SPACE + $OTHER_TOTAL_SPACE))
+                local TOTAL_SPACE=$(df -m /opt/ap-backups/backups/ | awk '{print $4}' | grep -v "Available")
+
+                if [ "$BACKUP_TOTAL_SPACE" -le "$TOTAL_SPACE" ]; then
+                        echo "$(datetime) There Is Approxmitly Enough Space To Complete This Backup. Proceeding..."
+                else
+                        echo "$(datetime) There Is Approxmitly Not Enough Space To Complete This Backup, Please Check The File System For Disk Usage"
+                        exit 0
+                fi
 
         	# Starting the file level backup process, this grabs all the paths from the config file
         	echo "$(datetime) Starting The File Level Backup Process"
@@ -113,9 +125,9 @@
                         	if [ -d $VHOST_BACKUP_DIR_N ]; then
                                 	local VHOSTNAME=`echo "${VHOST_BACKUP_DIR_N:1}" | sed 's/\//\-/g'`
                                 	if [ ! -f $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz ]; then
-                                        	echo "$(datetime) Starting File Level Backup For $VHOSTNAME$TIMESTAMP"
+                                        	echo "$(datetime) Starting File Level Backup For $VHOST_BACKUP_DIR_N"
                                         	tar -C $VHOST_BACKUP_DIR_N -zcf $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz .
-                                        	echo "$(datetime) Site $VHOSTNAME has been succesfully backed up & Is Avalible Under $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz"
+                                        	echo "$(datetime) Site $VHOST_BACKUP_DIR_N has been succesfully backed up & Is Avalible Under $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz"
                                 	else
                                         	echo "$(datetime) Error - $BACKUP_DIR/$VHOSTNAME$TIMESTAMP.tar.gz Backup Already Exists - Do You Have A Duplicate Backup?"
                                 	fi
