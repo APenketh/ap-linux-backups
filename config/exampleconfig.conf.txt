@@ -1,0 +1,28 @@
+# *****************************************************************
+#                 AP-Backups Configuration File
+# *****************************************************************
+
+# Web Service Settings
+WEBSERVICE="nginx"
+
+# Directory's To Include In The Backups (These Must Be Comma Seperated);
+VHOST_BACKUP_DIRECTORY="/var/www/"
+
+BACKUP_DIRECTORY="/etc/nginx/,/etc/haproxy/"
+
+# Database Service Settings
+DATABASE_SERVICE="mysql"
+
+# Databases That Are Not To Be Included In The Backups (These Must Be Comma Seperated);
+EXCLUDE_DATABASE=""
+
+# Backup Archive Settings;
+TOTAL_BACKUP_DAYS="3"
+
+# Rsync Settings
+RSYNCENABLED="yes"
+LOCALHOSTNAME="test-server"
+RSYNCTARGET="example.com"
+RSYNCTARGETPORT="22"
+RSYNCTARGETNAME="backupuser"
+RSYNCREMOTEPATH="/home/backupuser/"
