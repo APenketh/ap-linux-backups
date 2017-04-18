@@ -696,7 +696,7 @@
 
 	# Download The Backup Script
 	echo "Downloading The Backup Script, This Will Be Stored In $SCRIPTS_DIR"
-	wget http://dl.apenketh.com/ap-backups/ap-backups.sh -P $SCRIPTS_DIR > /dev/null
+	wget https://raw.githubusercontent.com/APenketh/ap-linux-backups/Live/ap-backups.sh -P $SCRIPTS_DIR > /dev/null
 
 	echo "Installation of AP-Backups has been succesfully completed"
 
