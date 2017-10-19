@@ -19,13 +19,13 @@ This will download the installation file and then run it, it will ask you for va
 
 ### Operating The Script
 #### Performing A Manual Backup
-At any time, you can perform a manual backup by initiating the script yourself; to do this as the root user you call the script in its current location and then use the -r flag, which runs a backup immediately. For example `/opt/ap-backups/ap-backups-client/ap-backups.sh -r`
+At any time, you can perform a manual backup by initiating the script yourself; to do this as the root user you call the script in its current location and then use the -r flag, which runs a backup immediately. For example `/opt/ap-backups/ap-backups.sh -r`
 
 #### Set Up Automatic Backups
 
 To easiest way to run automatic backups is to use the inbuilt cron deamon as part of your operating system. An example below of a cron job task to run the backup at 10PM server time every night is below;
 
-`0 20 * * * /opt/ap-backups/ap-backups-client/ap-backups.sh -r`
+`0 20 * * * /opt/ap-backups/ap-backups.sh -r`
 
 #### Getting Help From The Script
 If you need some help with remembering options for the script you can get help with the available options as well as a short description of what the option does by running the script with "-h" flag: `bash ap-backups.sh -h`
